@@ -1,0 +1,110 @@
+import { useEffect, useState, useCallback } from 'react'
+import Dashboard from './components/Dashboard.jsx'
+import Database from './components/Database.jsx'
+import ClientForm from './components/ClientForm.jsx'
+import { getJoinedRows, seedIfEmpty } from './db.js'
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('dashboard')
+  const [rows, setRows] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const [selectedClientId, setSelectedClientId] = useState(null)
+  const [formOpen, setFormOpen] = useState(false)
+  const [editingRow, setEditingRow] = useState(null) // { client, policy } or null for new
+
+  const refresh = useCallback(async () => {
+    const data = await getJoinedRows()
+    setRows(data)
+  }, [])
+
+  useEffect(() => {
+    ;(async () => {
+      await seedIfEmpty()
+      await refresh()
+      setLoading(false)
+    })()
+  }, [refresh])
+
+  function goToClient(clientId) {
+    setSelectedClientId(clientId)
+    setActiveTab('database')
+  }
+
+  function openAddForm() {
+    setEditingRow(null)
+    setFormOpen(true)
+  }
+
+  function openEditForm(row) {
+    setEditingRow(row)
+    setFormOpen(true)
+  }
+
+  async function handleSaved() {
+    setFormOpen(false)
+    await refresh()
+  }
+
+  async function handleDeleted() {
+    setSelectedClientId(null)
+    await refresh()
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-100">
+      <header className="bg-blue-900 text-white shadow-md">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between gap-2">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight truncate">Insurance Portal</h1>
+          <nav className="flex gap-1.5 sm:gap-2 shrink-0">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className={`px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base font-medium transition ${
+                activeTab === 'dashboard'
+                  ? 'bg-white text-blue-900'
+                  : 'text-blue-100 hover:bg-blue-800 active:bg-blue-950'
+              }`}
+            >
+              Dashboard
+            </button>
+            <button
+              onClick={() => setActiveTab('database')}
+              className={`px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base font-medium transition ${
+                activeTab === 'database'
+                  ? 'bg-white text-blue-900'
+                  : 'text-blue-100 hover:bg-blue-800 active:bg-blue-950'
+              }`}
+            >
+              Database
+            </button>
+          </nav>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        {loading ? (
+          <div className="text-center py-20 text-slate-500">Loading...</div>
+        ) : activeTab === 'dashboard' ? (
+          <Dashboard rows={rows} onSelectClient={goToClient} onAddClient={openAddForm} />
+        ) : (
+          <Database
+            rows={rows}
+            selectedClientId={selectedClientId}
+            onSelectClient={setSelectedClientId}
+            onAddClient={openAddForm}
+            onEdit={openEditForm}
+            onDeleted={handleDeleted}
+          />
+        )}
+      </main>
+
+      {formOpen && (
+        <ClientForm
+          existing={editingRow}
+          onCancel={() => setFormOpen(false)}
+          onSaved={handleSaved}
+        />
+      )}
+    </div>
+  )
+}
