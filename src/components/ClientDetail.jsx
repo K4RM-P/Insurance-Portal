@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { deleteClient } from '../db.js'
+import { deleteClient } from '../sync.js'
 import { calcAge, formatDate, formatCurrency } from '../helpers.js'
 
 function Field({ label, value }) {

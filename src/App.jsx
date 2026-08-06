@@ -2,9 +2,12 @@ import { useEffect, useState, useCallback } from 'react'
 import Dashboard from './components/Dashboard.jsx'
 import Database from './components/Database.jsx'
 import ClientForm from './components/ClientForm.jsx'
-import { getJoinedRows, seedIfEmpty } from './db.js'
+import Auth from './components/Auth.jsx'
+import { supabase } from './supabaseClient.js'
+import { getJoinedRows, initSync, stopSync, onRemoteChange } from './sync.js'
 
 export default function App() {
+  const [session, setSession] = useState(undefined) // undefined = checking, null = signed out
   const [activeTab, setActiveTab] = useState('dashboard')
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
@@ -19,12 +22,32 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession)
+    })
+    return () => listener.subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    if (!session) return
+    setLoading(true)
+    onRemoteChange(refresh)
     ;(async () => {
-      await seedIfEmpty()
+      await initSync(session.user.id)
       await refresh()
       setLoading(false)
     })()
-  }, [refresh])
+    return () => stopSync()
+  }, [session, refresh])
+
+  if (session === undefined) {
+    return <div className="min-h-screen bg-slate-100 flex items-center justify-center text-slate-500">Loading...</div>
+  }
+
+  if (!session) {
+    return <Auth />
+  }
 
   function goToClient(clientId) {
     setSelectedClientId(clientId)
@@ -76,6 +99,12 @@ export default function App() {
               }`}
             >
               Database
+            </button>
+            <button
+              onClick={() => supabase.auth.signOut()}
+              className="px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base font-medium text-blue-100 hover:bg-blue-800 active:bg-blue-950 transition"
+            >
+              Sign Out
             </button>
           </nav>
         </div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { findClientByName, saveClientAndPolicy } from '../db.js'
+import { findClientByName, saveClientAndPolicy } from '../sync.js'
 import { calcAge, calcMaturityDate, isValidEmail, isValidPhone } from '../helpers.js'
 
 const FREQUENCIES = ['Yearly', 'Half-Yearly', 'Quarterly', 'Monthly']
