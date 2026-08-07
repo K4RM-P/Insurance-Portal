@@ -29,41 +29,43 @@ export default function Database({ rows, selectedClientId, onSelectClient, onAdd
     })
   }, [rows, query])
 
-  // Collapse policies that are identical in every field except policyNumber
-  // (e.g. several family members bought the same plan in one batch) into a
-  // single display entry listing all of their policy numbers.
-  const mergedEntries = useMemo(() => {
+  // One row per client, no matter how many policies they hold — policies
+  // identical in every field except policyNumber are grouped together within
+  // that row (their numbers listed together); genuinely different policies
+  // are summarized as "N policies" rather than repeating the client.
+  const clientEntries = useMemo(() => {
     const byClient = new Map()
     for (const { client, policy } of filteredRows) {
       if (!byClient.has(client.id)) byClient.set(client.id, { client, policies: [] })
       byClient.get(client.id).policies.push(policy)
     }
-    const entries = []
-    for (const { client, policies } of byClient.values()) {
-      for (const group of groupPoliciesBySignature(policies)) {
-        entries.push({ client, policyGroup: group })
-      }
-    }
-    return entries
+    return Array.from(byClient.values()).map(({ client, policies }) => {
+      const policyGroups = groupPoliciesBySignature(policies)
+      const earliestDueDate = policies
+        .map((p) => p.nextPremiumDueDate)
+        .filter(Boolean)
+        .sort()[0]
+      return { client, policies, policyGroups, earliestDueDate }
+    })
   }, [filteredRows])
 
   const sortedRows = useMemo(() => {
-    const copy = [...mergedEntries]
+    const copy = [...clientEntries]
     copy.sort((a, b) => {
       let av, bv
       if (sortKey === 'clientName') {
         av = a.client.clientName?.toLowerCase() || ''
         bv = b.client.clientName?.toLowerCase() || ''
       } else if (sortKey === 'nextPremiumDueDate') {
-        av = a.policyGroup.policies[0].nextPremiumDueDate || ''
-        bv = b.policyGroup.policies[0].nextPremiumDueDate || ''
+        av = a.earliestDueDate || ''
+        bv = b.earliestDueDate || ''
       }
       if (av < bv) return sortDir === 'asc' ? -1 : 1
       if (av > bv) return sortDir === 'asc' ? 1 : -1
       return 0
     })
     return copy
-  }, [mergedEntries, sortKey, sortDir])
+  }, [clientEntries, sortKey, sortDir])
 
   function toggleSort(key) {
     if (sortKey === key) {
@@ -178,28 +180,26 @@ export default function Database({ rows, selectedClientId, onSelectClient, onAdd
             No records match your search.
           </div>
         )}
-        {sortedRows.map(({ client, policyGroup }) => {
-          const policy = policyGroup.policies[0]
-          const policyNumberLabel = policyGroup.policyNumbers.join(', ') || '-'
+        {sortedRows.map(({ client, policies, policyGroups, earliestDueDate }) => {
+          const policy = policies[0]
+          const allPolicyNumbers = policies.map((p) => p.policyNumber).filter(Boolean)
+          const planLabel = policyGroups.length === 1 ? policy.planName : `${policyGroups.length} policies`
           return (
             <button
-              key={`${client.id}-${policy.id}`}
+              key={client.id}
               onClick={() => onSelectClient(client.id)}
               className="w-full text-left bg-white rounded-lg shadow-sm border border-slate-200 px-4 py-3.5 active:bg-blue-50"
             >
               <div className="flex items-start justify-between gap-2">
                 <span className="font-semibold text-slate-800">{client.clientName}</span>
-                <span className="text-xs text-slate-500 shrink-0">{formatDate(policy.nextPremiumDueDate)}</span>
+                <span className="text-xs text-slate-500 shrink-0">{formatDate(earliestDueDate)}</span>
               </div>
               <div className="text-sm text-slate-600 mt-1">
-                {policy.companyName} &middot; {policy.planName}
+                {policy.companyName} &middot; {planLabel}
               </div>
               <div className="text-sm text-slate-500 mt-0.5">
-                {policyNumberLabel} &middot; {client.phone}
+                {allPolicyNumbers.join(', ') || '-'} &middot; {client.phone}
               </div>
-              {policyGroup.policyNumbers.length > 1 && (
-                <div className="text-xs text-blue-700 mt-1">{policyGroup.policyNumbers.length} identical policies</div>
-              )}
             </button>
           )
         })}
@@ -229,24 +229,21 @@ export default function Database({ rows, selectedClientId, onSelectClient, onAdd
             </tr>
           </thead>
           <tbody>
-            {sortedRows.map(({ client, policyGroup }) => {
-              const policy = policyGroup.policies[0]
+            {sortedRows.map(({ client, policies, policyGroups, earliestDueDate }) => {
+              const policy = policies[0]
+              const allPolicyNumbers = policies.map((p) => p.policyNumber).filter(Boolean)
+              const planLabel = policyGroups.length === 1 ? policy.planName : `${policyGroups.length} policies`
               return (
                 <tr
-                  key={`${client.id}-${policy.id}`}
+                  key={client.id}
                   onClick={() => onSelectClient(client.id)}
                   className="border-b border-slate-100 last:border-0 hover:bg-blue-50 cursor-pointer"
                 >
                   <td className="px-4 py-3 font-medium text-slate-800">{client.clientName}</td>
                   <td className="px-4 py-3 text-slate-600">{policy.companyName}</td>
-                  <td className="px-4 py-3 text-slate-600">{policy.planName}</td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {policyGroup.policyNumbers.join(', ') || '-'}
-                    {policyGroup.policyNumbers.length > 1 && (
-                      <span className="ml-1.5 text-xs text-blue-700">({policyGroup.policyNumbers.length})</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">{formatDate(policy.nextPremiumDueDate)}</td>
+                  <td className="px-4 py-3 text-slate-600">{planLabel}</td>
+                  <td className="px-4 py-3 text-slate-600">{allPolicyNumbers.join(', ') || '-'}</td>
+                  <td className="px-4 py-3 text-slate-600">{formatDate(earliestDueDate)}</td>
                   <td className="px-4 py-3 text-slate-600">{client.phone}</td>
                 </tr>
               )
