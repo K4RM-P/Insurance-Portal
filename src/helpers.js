@@ -73,3 +73,38 @@ export function isValidPhone(phone) {
   if (!phone) return true
   return /^[\d\s()+-]{7,15}$/.test(phone)
 }
+
+const SIGNATURE_FIELDS = [
+  'companyName',
+  'planName',
+  'assuredAmount',
+  'premiumFrequency',
+  'premiumAmount',
+  'nextPremiumDueDate',
+  'term',
+  'commencementDate',
+  'maturityDate',
+]
+
+function policySignature(policy) {
+  return SIGNATURE_FIELDS.map((f) => String(policy[f] ?? '')).join('|')
+}
+
+/**
+ * Groups a client's policies so that policies which are identical in every
+ * field except policyNumber collapse into a single entry with multiple
+ * policy numbers (common when a family buys several identical policies in
+ * one batch). Returns [{ policies: [...], policyNumbers: [...] }].
+ */
+export function groupPoliciesBySignature(policies) {
+  const groups = new Map()
+  for (const policy of policies) {
+    const sig = policySignature(policy)
+    if (!groups.has(sig)) groups.set(sig, [])
+    groups.get(sig).push(policy)
+  }
+  return Array.from(groups.values()).map((groupPolicies) => ({
+    policies: groupPolicies,
+    policyNumbers: groupPolicies.map((p) => p.policyNumber).filter(Boolean),
+  }))
+}

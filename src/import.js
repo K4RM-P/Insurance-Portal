@@ -106,6 +106,9 @@ export async function parseClientPolicyWorkbook(file) {
   let carryAddress = null
   let carryPlan = null
   let carryMode = null
+  let carryAnnualPremium = null
+  let carryFirstYearPremium = null
+  let carrySecondYearPremium = null
 
   for (const row of dataRows) {
     const [, name, phone, location, plan, policyNumber, issueDate, sumAssured, term, annualPremium, firstYearPremium, mode, secondYearPremium] = row
@@ -115,6 +118,17 @@ export async function parseClientPolicyWorkbook(file) {
     if (location) carryAddress = String(location).trim()
     if (plan) carryPlan = String(plan).trim()
     if (mode) carryMode = String(mode).trim()
+
+    // Rows that continue the previous client's batch of identical policies
+    // (bought together for family members) often leave premium columns
+    // blank — carry the last known amounts forward so those policies read
+    // as identical, letting the UI merge them instead of showing "0".
+    const hasOwnPremium = annualPremium != null || firstYearPremium != null || secondYearPremium != null
+    if (hasOwnPremium) {
+      carryAnnualPremium = annualPremium
+      carryFirstYearPremium = firstYearPremium
+      carrySecondYearPremium = secondYearPremium
+    }
 
     const isoIssueDate = toIsoDate(issueDate)
 
@@ -132,7 +146,9 @@ export async function parseClientPolicyWorkbook(file) {
     const maturityDate = parsedTerm ? calcMaturityDate(commencementDate, parsedTerm) : ''
 
     const periodicPremium =
-      parseAmount(secondYearPremium) || parseAmount(firstYearPremium) || (isOneTime ? parseAmount(annualPremium) : 0)
+      parseAmount(carrySecondYearPremium) ||
+      parseAmount(carryFirstYearPremium) ||
+      (isOneTime ? parseAmount(carryAnnualPremium) : 0)
 
     records.push({
       clientData: {
