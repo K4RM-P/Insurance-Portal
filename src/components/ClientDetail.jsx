@@ -28,7 +28,10 @@ export default function ClientDetail({ row, onClose, onEdit, onDeleted }) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center sm:p-4 z-40">
       <div className="bg-white sm:rounded-lg shadow-xl max-w-2xl w-full h-full sm:h-auto sm:max-h-[90vh] overflow-y-auto flex flex-col">
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-200 sticky top-0 bg-white z-10">
+        <div
+          className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-200 sticky top-0 bg-white z-10"
+          style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}
+        >
           <h2 className="text-lg font-semibold text-slate-800 truncate pr-2">{client.clientName}</h2>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl leading-none px-2 -mr-2 shrink-0">
             &times;
@@ -72,23 +75,26 @@ export default function ClientDetail({ row, onClose, onEdit, onDeleted }) {
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-4 border-t border-slate-200 sticky bottom-0 bg-white">
+        <div
+          className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3 sm:py-4 border-t border-slate-200 sticky bottom-0 bg-white"
+          style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+        >
           <button
             onClick={() => setConfirmOpen(true)}
-            className="text-red-600 hover:text-red-700 font-medium px-3 sm:px-4 py-2 rounded-md hover:bg-red-50 active:bg-red-100"
+            className="text-red-600 hover:text-red-700 font-medium px-3 sm:px-4 py-2.5 sm:py-2 rounded-md hover:bg-red-50 active:bg-red-100"
           >
             Delete
           </button>
           <div className="flex gap-2">
             <button
               onClick={onClose}
-              className="px-3 sm:px-4 py-2 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-50 active:bg-slate-100"
+              className="px-3 sm:px-4 py-2.5 sm:py-2 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-50 active:bg-slate-100"
             >
               Close
             </button>
             <button
               onClick={onEdit}
-              className="px-3 sm:px-4 py-2 rounded-md bg-blue-800 hover:bg-blue-900 active:bg-blue-950 text-white font-medium"
+              className="px-3 sm:px-4 py-2.5 sm:py-2 rounded-md bg-blue-800 hover:bg-blue-900 active:bg-blue-950 text-white font-medium"
             >
               Edit
             </button>

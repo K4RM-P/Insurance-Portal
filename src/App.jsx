@@ -76,13 +76,13 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <header className="bg-blue-900 text-white shadow-md">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between gap-2">
-          <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight truncate">Insurance Portal</h1>
-          <nav className="flex gap-1.5 sm:gap-2 shrink-0">
+      <header className="bg-blue-900 text-white shadow-md sticky top-0 z-30" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-4 flex items-center justify-between gap-2">
+          <h1 className="text-base sm:text-xl md:text-2xl font-bold tracking-tight truncate">Insurance Portal</h1>
+          <nav className="flex gap-1 sm:gap-2 shrink-0">
             <button
               onClick={() => setActiveTab('dashboard')}
-              className={`px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base font-medium transition ${
+              className={`px-2.5 sm:px-4 py-2 rounded-md text-sm sm:text-base font-medium transition ${
                 activeTab === 'dashboard'
                   ? 'bg-white text-blue-900'
                   : 'text-blue-100 hover:bg-blue-800 active:bg-blue-950'
@@ -92,7 +92,7 @@ export default function App() {
             </button>
             <button
               onClick={() => setActiveTab('database')}
-              className={`px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base font-medium transition ${
+              className={`px-2.5 sm:px-4 py-2 rounded-md text-sm sm:text-base font-medium transition ${
                 activeTab === 'database'
                   ? 'bg-white text-blue-900'
                   : 'text-blue-100 hover:bg-blue-800 active:bg-blue-950'
@@ -102,15 +102,17 @@ export default function App() {
             </button>
             <button
               onClick={() => supabase.auth.signOut()}
-              className="px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base font-medium text-blue-100 hover:bg-blue-800 active:bg-blue-950 transition"
+              aria-label="Sign Out"
+              className="px-2.5 sm:px-4 py-2 rounded-md text-sm sm:text-base font-medium text-blue-100 hover:bg-blue-800 active:bg-blue-950 transition"
             >
-              Sign Out
+              <span className="hidden sm:inline">Sign Out</span>
+              <span className="sm:hidden" aria-hidden="true">⏻</span>
             </button>
           </nav>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-8">
         {loading ? (
           <div className="text-center py-20 text-slate-500">Loading...</div>
         ) : activeTab === 'dashboard' ? (

@@ -25,9 +25,9 @@ function DaysLabel({ days, overdueAllowed }) {
 
 function StatCard({ label, value }) {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-slate-200 px-4 py-3">
-      <div className="text-xs uppercase tracking-wide text-slate-500 font-medium">{label}</div>
-      <div className="text-2xl font-bold text-blue-900 mt-1">{value}</div>
+    <div className="bg-white rounded-lg shadow-sm border border-slate-200 px-3 sm:px-4 py-2.5 sm:py-3">
+      <div className="text-[11px] sm:text-xs uppercase tracking-wide text-slate-500 font-medium">{label}</div>
+      <div className="text-lg sm:text-2xl font-bold text-blue-900 mt-1 truncate">{value}</div>
     </div>
   )
 }

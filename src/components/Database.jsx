@@ -130,7 +130,7 @@ export default function Database({ rows, selectedClientId, onSelectClient, onAdd
           <button
             key={policy.id}
             onClick={() => onSelectClient(client.id)}
-            className="w-full text-left bg-white rounded-lg shadow-sm border border-slate-200 px-4 py-3 active:bg-blue-50"
+            className="w-full text-left bg-white rounded-lg shadow-sm border border-slate-200 px-4 py-3.5 active:bg-blue-50"
           >
             <div className="flex items-start justify-between gap-2">
               <span className="font-semibold text-slate-800">{client.clientName}</span>
