@@ -125,6 +125,7 @@ export default function App() {
             onAddClient={openAddForm}
             onEdit={openEditForm}
             onDeleted={handleDeleted}
+            onImported={refresh}
           />
         )}
       </main>

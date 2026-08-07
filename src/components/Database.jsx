@@ -1,16 +1,18 @@
 import { useMemo, useState } from 'react'
 import SearchBar from './SearchBar.jsx'
 import ClientDetail from './ClientDetail.jsx'
+import ImportModal from './ImportModal.jsx'
 import { exportToExcel } from '../export.js'
 import { formatDate } from '../helpers.js'
 
 const SEARCH_FIELDS_POLICY = ['companyName', 'planName', 'policyNumber']
 const SEARCH_FIELDS_CLIENT = ['clientName', 'address', 'phone', 'email']
 
-export default function Database({ rows, selectedClientId, onSelectClient, onAddClient, onEdit, onDeleted }) {
+export default function Database({ rows, selectedClientId, onSelectClient, onAddClient, onEdit, onDeleted, onImported }) {
   const [query, setQuery] = useState('')
   const [sortKey, setSortKey] = useState('clientName')
   const [sortDir, setSortDir] = useState('asc')
+  const [importOpen, setImportOpen] = useState(false)
 
   const filteredRows = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -65,13 +67,29 @@ export default function Database({ rows, selectedClientId, onSelectClient, onAdd
     return (
       <div className="text-center py-20 bg-white rounded-lg shadow-sm border border-slate-200">
         <h2 className="text-xl font-semibold text-slate-700 mb-2">No clients yet</h2>
-        <p className="text-slate-500 mb-6">Add your first client to build your database.</p>
-        <button
-          onClick={onAddClient}
-          className="bg-blue-800 hover:bg-blue-900 text-white font-medium px-5 py-2.5 rounded-md"
-        >
-          Add Client
-        </button>
+        <p className="text-slate-500 mb-6">Add your first client, or upload a spreadsheet to bulk-import your existing records.</p>
+        <div className="flex items-center justify-center gap-2">
+          <button
+            onClick={onAddClient}
+            className="bg-blue-800 hover:bg-blue-900 text-white font-medium px-5 py-2.5 rounded-md"
+          >
+            Add Client
+          </button>
+          <button
+            onClick={() => setImportOpen(true)}
+            className="bg-emerald-700 hover:bg-emerald-800 text-white font-medium px-5 py-2.5 rounded-md"
+          >
+            Upload Spreadsheet
+          </button>
+        </div>
+        {importOpen && (
+          <ImportModal
+            onCancel={() => setImportOpen(false)}
+            onImported={async () => {
+              await onImported()
+            }}
+          />
+        )}
       </div>
     )
   }
@@ -82,12 +100,18 @@ export default function Database({ rows, selectedClientId, onSelectClient, onAdd
         <div className="flex-1">
           <SearchBar value={query} onChange={setQuery} />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button
             onClick={onAddClient}
             className="flex-1 sm:flex-none bg-blue-800 hover:bg-blue-900 active:bg-blue-950 text-white font-medium px-4 py-2.5 rounded-md whitespace-nowrap"
           >
             + Add Client
+          </button>
+          <button
+            onClick={() => setImportOpen(true)}
+            className="flex-1 sm:flex-none bg-slate-700 hover:bg-slate-800 active:bg-slate-900 text-white font-medium px-4 py-2.5 rounded-md whitespace-nowrap"
+          >
+            Upload Spreadsheet
           </button>
           <button
             onClick={() => exportToExcel(rows)}
@@ -97,6 +121,15 @@ export default function Database({ rows, selectedClientId, onSelectClient, onAdd
           </button>
         </div>
       </div>
+
+      {importOpen && (
+        <ImportModal
+          onCancel={() => setImportOpen(false)}
+          onImported={async () => {
+            await onImported()
+          }}
+        />
+      )}
 
       {/* Sort controls (shown above the card list on mobile, where column headers aren't clickable) */}
       <div className="flex sm:hidden items-center gap-2 text-sm">
