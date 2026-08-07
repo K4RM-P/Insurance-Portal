@@ -1,5 +1,3 @@
-import * as XLSX from 'xlsx'
-
 const COLUMN_MAP = [
   ['companyName', 'Company Name'],
   ['planName', 'Plan Name'],
@@ -33,7 +31,8 @@ function calcAge(dob) {
 /**
  * rows: array of { client, policy }
  */
-export function exportToExcel(rows) {
+export async function exportToExcel(rows) {
+  const XLSX = await import('xlsx')
   const data = rows.map(({ client, policy }) => {
     const record = {
       companyName: policy.companyName || '',

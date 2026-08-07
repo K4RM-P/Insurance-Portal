@@ -27,8 +27,7 @@ export default function Auth() {
       return
     }
     if (mode === 'sign-up') {
-      setInfo('Account created. Check your email to confirm, then sign in.')
-      setMode('sign-in')
+      setInfo('Account created.')
     }
   }
 
