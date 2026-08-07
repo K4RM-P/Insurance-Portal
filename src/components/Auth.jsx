@@ -1,33 +1,29 @@
 import { useState } from 'react'
 import { supabase } from '../supabaseClient.js'
+import { codeToEmail, codeToPassword, normalizeCode } from '../accountCode.js'
 
 export default function Auth() {
-  const [mode, setMode] = useState('sign-in') // 'sign-in' | 'sign-up'
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [code, setCode] = useState('')
   const [error, setError] = useState(null)
-  const [info, setInfo] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
+    const normalized = normalizeCode(code)
+    if (!normalized) return
+
     setError(null)
-    setInfo(null)
     setSubmitting(true)
 
-    const { error: authError } =
-      mode === 'sign-in'
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password })
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: codeToEmail(normalized),
+      password: codeToPassword(normalized),
+    })
 
     setSubmitting(false)
 
     if (authError) {
-      setError(authError.message)
-      return
-    }
-    if (mode === 'sign-up') {
-      setInfo('Account created.')
+      setError('Invalid account code.')
     }
   }
 
@@ -38,53 +34,30 @@ export default function Auth() {
         className="bg-white rounded-lg shadow-md w-full max-w-sm p-6 space-y-4"
       >
         <h1 className="text-xl font-bold text-blue-900 text-center">Insurance Portal</h1>
-        <p className="text-sm text-slate-500 text-center">
-          {mode === 'sign-in' ? 'Sign in to sync your data' : 'Create an account to sync your data'}
-        </p>
+        <p className="text-sm text-slate-500 text-center">Enter your account code to continue</p>
 
         <div>
-          <label className="block text-sm font-medium text-slate-600 mb-1">Email</label>
+          <label className="block text-sm font-medium text-slate-600 mb-1">Account Code</label>
           <input
-            type="email"
+            type="text"
+            inputMode="numeric"
+            autoFocus
             required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full border border-slate-300 rounded-md px-3 py-2"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-600 mb-1">Password</label>
-          <input
-            type="password"
-            required
-            minLength={6}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full border border-slate-300 rounded-md px-3 py-2"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-lg tracking-wide text-center"
+            placeholder="Account code"
           />
         </div>
 
-        {error && <p className="text-red-600 text-sm">{error}</p>}
-        {info && <p className="text-emerald-600 text-sm">{info}</p>}
+        {error && <p className="text-red-600 text-sm text-center">{error}</p>}
 
         <button
           type="submit"
-          disabled={submitting}
-          className="w-full px-4 py-2 rounded-md bg-blue-800 hover:bg-blue-900 text-white font-medium disabled:opacity-50"
+          disabled={submitting || !code.trim()}
+          className="w-full px-4 py-2.5 rounded-md bg-blue-800 hover:bg-blue-900 active:bg-blue-950 text-white font-medium disabled:opacity-50"
         >
-          {submitting ? 'Please wait...' : mode === 'sign-in' ? 'Sign In' : 'Sign Up'}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in')
-            setError(null)
-            setInfo(null)
-          }}
-          className="w-full text-sm text-blue-800 hover:underline"
-        >
-          {mode === 'sign-in' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+          {submitting ? 'Please wait...' : 'Continue'}
         </button>
       </form>
     </div>
